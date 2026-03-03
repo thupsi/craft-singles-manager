@@ -193,6 +193,18 @@ class Plugin extends BasePlugin
             return;
         }
 
+        // If the source for this single is disabled in the element sources config,
+        // it means it's navigated to from a custom link — skip sidebar injection.
+        $sourceConfigs = Craft::$app->getProjectConfig()->get('elementSources.' . Entry::class) ?? [];
+        foreach ($sourceConfigs as $src) {
+            if (($src['key'] ?? null) === 'single:' . $section->uid) {
+                if (!empty($src['disabled'])) {
+                    return;
+                }
+                break;
+            }
+        }
+
         $response = Craft::$app->getResponse();
         /** @var CpScreenResponseBehavior|null $behavior */
         $behavior = $response->getBehavior(CpScreenResponseBehavior::NAME);
