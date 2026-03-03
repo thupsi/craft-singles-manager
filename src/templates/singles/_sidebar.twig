@@ -65,6 +65,12 @@
                     </li>
                 {% endif %}
 
+            {% elseif source.key is defined and source.key is not empty %}
+                {# Custom sources — link to the page index #}
+                <li>
+                    <a href="{{ pageIndexUrl }}">{{ source.label|t('site') }}</a>
+                </li>
+
             {% endif %}
 
         {% endfor %}

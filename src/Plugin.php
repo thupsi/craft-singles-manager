@@ -345,6 +345,8 @@ class Plugin extends BasePlugin
                 }
             }
 
+            $pagePath = $currentPage ? StringHelper::toKebabCase($currentPage) : 'entries';
+
             return Craft::$app->getView()->renderTemplate(
                 '_singles-manager/singles/_sidebar',
                 [
@@ -352,6 +354,7 @@ class Plugin extends BasePlugin
                     'sectionUrlMap' => $sectionUrlMap,
                     'editableSingleSections' => $editableSingleSections,
                     'currentSectionUid' => $currentSectionUid,
+                    'pageIndexUrl' => UrlHelper::cpUrl("content/{$pagePath}"),
                 ],
                 View::TEMPLATE_MODE_CP
             );
