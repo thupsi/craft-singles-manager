@@ -58,7 +58,7 @@ The "Hide right sidebar" toggle and "Fallback breadcrumb source" selector appear
 ### With DDEV (one command)
 
 ```bash
-ddev composer require thupsi/craft-singles-manager:dev-main && ddev craft plugin/install _singles-manager
+ddev composer require thupsi/craft-singles-manager:^0.3.0 && ddev craft plugin/install _singles-manager
 ```
 
 ### Manual
@@ -85,13 +85,7 @@ composer config --global github-oauth.github.com <your-token>
 #### 2. Require the plugin
 
 ```bash
-composer require thupsi/craft-singles-manager:dev-main
-```
-
-Or pin to a tagged release:
-
-```bash
-composer require thupsi/craft-singles-manager:^0.1
+composer require thupsi/craft-singles-manager:^0.3.0
 ```
 
 #### 3. Install in Craft
