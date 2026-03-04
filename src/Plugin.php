@@ -366,24 +366,38 @@ class Plugin extends BasePlugin
         // Stay on the single's edit form after saving (instead of going to the entries index).
         $behavior->redirectUrl = '{cpEditUrl}';
 
-        // Fix the breadcrumb: Section::getPage() looks for the 'singles' source key
-        // which our plugin replaced with 'single:{uid}' keys, so it always returns null
-        // and the crumb falls back to "Entries". We find the correct page ourselves and
-        // override the first crumb accordingly.
+        // Fix the breadcrumb and prepend the page name to the H1 title.
+        // Section::getPage() looks for the 'singles' source key which our plugin
+        // replaced with 'single:{uid}' keys, so it always returns null and the
+        // crumb falls back to "Entries". We find the correct page ourselves.
         $originalCrumbs = is_callable($behavior->crumbs)
             ? ($behavior->crumbs)()
             : ($behavior->crumbs ?? []);
 
-        $behavior->crumbs = function () use ($originalCrumbs, $currentSectionUid) {
-            $elementSourcesService = Craft::$app->getElementSources();
-            $currentPage = null;
-            foreach ($elementSourcesService->getSources(Entry::class) as $src) {
-                if (($src['key'] ?? null) === 'single:' . $currentSectionUid) {
-                    $currentPage = $src['page'] ?? null;
-                    break;
-                }
+        $currentPage = null;
+        foreach (Craft::$app->getElementSources()->getSources(Entry::class) as $src) {
+            if (($src['key'] ?? null) === 'single:' . $currentSectionUid) {
+                $currentPage = $src['page'] ?? null;
+                break;
             }
+        }
 
+        // Prepend "Page / " to the H1 title for consistency when switching sources,
+        // but only when the sidebar will actually be shown (multiple non-heading sources).
+        if ($currentPage !== null) {
+            $elementSourcesService = Craft::$app->getElementSources();
+            $pageNameId = $elementSourcesService->pageNameId($currentPage);
+            $pageSources = array_filter(
+                $elementSourcesService->getSources(Entry::class),
+                fn($s) => isset($s['page']) && $elementSourcesService->pageNameId($s['page']) === $pageNameId,
+            );
+            $nonHeadingCount = count(array_filter($pageSources, fn($s) => ($s['type'] ?? '') !== 'heading'));
+            if ($nonHeadingCount > 1) {
+                $behavior->title = Craft::t('site', $currentPage) . ' / ' . ($behavior->title ?? $element->getUiLabel());
+            }
+        }
+
+        $behavior->crumbs = function () use ($originalCrumbs, $currentSectionUid, $currentPage) {
             $pageLabel = $currentPage ?? 'Entries';
             $pageUrl = 'content/' . ($currentPage ? StringHelper::toKebabCase($currentPage) : 'entries');
 
