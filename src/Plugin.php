@@ -233,19 +233,48 @@ class Plugin extends BasePlugin
 
             $behavior->crumbs = function () use ($breadcrumbSourceKey) {
                 $elementSourcesService = Craft::$app->getElementSources();
+                $allSources = $elementSourcesService->getSources(Entry::class, withDisabled: true);
                 $currentPage = null;
-                foreach ($elementSourcesService->getSources(Entry::class, withDisabled: true) as $src) {
+                $sourceLabel = null;
+                foreach ($allSources as $src) {
                     if (($src['key'] ?? null) === $breadcrumbSourceKey) {
                         $currentPage = $src['page'] ?? null;
+                        $sourceLabel = $src['label'] ?? null;
                         break;
                     }
                 }
                 $pageLabel = $currentPage ?? 'Entries';
-                $pageUrl = 'content/' . ($currentPage ? StringHelper::toKebabCase($currentPage) : 'entries');
-                return [[
+                $pagePath = 'content/' . ($currentPage ? StringHelper::toKebabCase($currentPage) : 'entries');
+                $pageUrl = UrlHelper::cpUrl($pagePath);
+
+                $crumbs = [[
                     'label' => Craft::t('site', $pageLabel),
-                    'url' => UrlHelper::cpUrl($pageUrl),
+                    'url' => $pageUrl,
                 ]];
+
+                // Only add the source as a second crumb if there are multiple
+                // non-heading sources on this page (otherwise it adds no value).
+                if ($sourceLabel && $currentPage !== null) {
+                    $pageNameId = $elementSourcesService->pageNameId($currentPage);
+                    $nonHeadingsOnPage = array_filter(
+                        $allSources,
+                        fn($s) => ($s['type'] ?? '') !== 'heading'
+                            && isset($s['page'])
+                            && $elementSourcesService->pageNameId($s['page']) === $pageNameId,
+                    );
+                    if (count($nonHeadingsOnPage) > 1) {
+                        $crumbs[] = [
+                            'html' => '<a class="crumb-link singles-manager-crumb-source"'
+                                . ' href="' . htmlspecialchars($pageUrl) . '"'
+                                . ' data-source-key="' . htmlspecialchars($breadcrumbSourceKey) . '"'
+                                . ' data-page-url="' . htmlspecialchars($pageUrl) . '">'
+                                . htmlspecialchars(Craft::t('site', $sourceLabel))
+                                . '</a>',
+                        ];
+                    }
+                }
+
+                return $crumbs;
             };
             return;
         }

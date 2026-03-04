@@ -71,6 +71,7 @@
                 <li>
                     <a href="{{ pageIndexUrl }}"
                        data-source-key="{{ source.key|e('html_attr') }}"
+                       data-page-url="{{ pageIndexUrl|e('html_attr') }}"
                        class="singles-manager-custom-source">
                         {{ source.label|t('site') }}
                     </a>
@@ -81,18 +82,3 @@
         {% endfor %}
     </ul>
 </nav>
-
-<script>
-document.querySelectorAll('.singles-manager-custom-source').forEach(function(link) {
-    link.addEventListener('click', function(e) {
-        e.preventDefault();
-        var sourceKey = this.dataset.sourceKey;
-        var storageKey = 'Craft-' + Craft.systemUid + '.elementindex.' + {{ 'craft\\elements\\Entry'|json_encode|raw }};
-        var state = {};
-        try { state = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (_) {}
-        state.selectedSource = sourceKey;
-        localStorage.setItem(storageKey, JSON.stringify(state));
-        window.location.href = this.href;
-    });
-});
-</script>

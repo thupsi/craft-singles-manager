@@ -21,5 +21,26 @@
         e.stopImmediatePropagation();
         window.location.href = url;
     }, true /* capture phase — runs before all bubble-phase / Vue handlers */);
+
+    // Handle breadcrumb and sidebar custom-source links: pre-select the source
+    // in localStorage before navigating so the element index opens on it.
+    document.addEventListener('click', function (e) {
+        var el = e.target && e.target.closest
+            ? e.target.closest('.singles-manager-crumb-source, .singles-manager-custom-source')
+            : null;
+        if (!el) return;
+
+        e.preventDefault();
+        var sourceKey = el.dataset.sourceKey;
+        var pageUrl = el.dataset.pageUrl || el.href;
+        if (sourceKey && typeof Craft !== 'undefined' && Craft.systemUid) {
+            var storageKey = 'Craft-' + Craft.systemUid + '.elementindex.craft\\elements\\Entry';
+            var state = {};
+            try { state = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (_) {}
+            state.selectedSource = sourceKey;
+            localStorage.setItem(storageKey, JSON.stringify(state));
+        }
+        window.location.href = pageUrl;
+    });
 }());
 
