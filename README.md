@@ -96,7 +96,7 @@ Or go to **Settings → Plugins** in the control panel.
 
 ## After installation
 
-In **Settings → Sources** (Entry element sources), review your source ordering — the old grouped `singles` key is replaced by individual `single:{uid}` keys.
+Review your source ordering — the old grouped `singles` key is replaced by individual `single:{uid}` keys.
 
 ---
 
