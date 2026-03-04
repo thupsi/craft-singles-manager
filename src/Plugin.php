@@ -235,8 +235,19 @@ class Plugin extends BasePlugin
                 return;
             }
 
-            $behavior->crumbs = function () use ($breadcrumbSourceKey, $element) {
-                $elementSourcesService = Craft::$app->getElementSources();
+            // Hide the right-hand meta sidebar if configured for this section.
+            $hidden = $settings->hideSidebarSections;
+            if (in_array($section->uid, $hidden, true)) {
+                $originalPrepareScreen = $behavior->prepareScreen;
+                $behavior->prepareScreen = function ($response, $containerId) use ($originalPrepareScreen) {
+                    if ($originalPrepareScreen) {
+                        ($originalPrepareScreen)($response, $containerId);
+                    }
+                    $response->getBehavior(CpScreenResponseBehavior::NAME)->metaSidebarHtml = '';
+                };
+            }
+
+            $behavior->crumbs = function () use ($breadcrumbSourceKey, $element) {                $elementSourcesService = Craft::$app->getElementSources();
                 $allSources = $elementSourcesService->getSources(Entry::class, withDisabled: true);
                 $currentPage = null;
                 $sourceLabel = null;
@@ -486,15 +497,12 @@ class Plugin extends BasePlugin
      */
     private function _injectSectionSettingsField(ActionEvent $e): void
     {
-        if (Craft::$app->getRequest()->getAcceptsJson()) {
-            return;
-        }
-
         // Only show the field for existing single sections.
-        // sectionId comes from the URL pattern settings/sections/<sectionId:\d+>
-        // — read the last URL segment since route params aren't exposed via getParam().
-        $segments = Craft::$app->getRequest()->getSegments();
-        $sectionId = end($segments);
+        // When accessed via CP route (settings/sections/<id>), sectionId is a route
+        // param. When opened as a slideout, it's passed as a query param. Both are
+        // accessible via getParam().
+        $request = Craft::$app->getRequest();
+        $sectionId = $request->getParam('sectionId') ?? end($request->getSegments());
         if (!$sectionId) {
             return;
         }
