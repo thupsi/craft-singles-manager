@@ -3,10 +3,11 @@
  # when a single entry is being edited.
  #
  # Variables (passed from Plugin::_injectSinglesSidebar):
- #   sidebarSources         – all ordered sources (all pages) from ElementSources::getSources()
- #   sectionUrlMap          – sectionUid → cpUrl map
- #   editableSingleSections – handle → Section, for the 'singles' key fallback
- #   currentSectionUid      – UID of the section being edited (for active highlight)
+ #   sidebarSources         - all ordered sources for the current page
+ #   sectionUrlMap          - sectionUid → cpUrl map
+ #   editableSingleSections - handle → Section, for the 'singles' key fallback
+ #   currentSectionUid      - UID of the section being edited (for active highlight)
+ #   pageIndexUrl           - URL of the current page's element index
  #}
 
 {# Hide the sidebar container on narrower viewports where four columns
@@ -18,39 +19,78 @@
 </style>
 
 <nav>
-    <ul>
+    <ul class="sources-list">
+        {% set nestedUnderHeading = false %}
         {% for source in sidebarSources %}
 
             {% if source.type == 'heading' %}
-                {% if source.heading ?? '' %}
-                    <li class="heading"><span>{{ source.heading|t('site') }}</span></li>
-                {% else %}
-                    <li class="heading"></li>
+                {% set headingKey = source.key ?? (source.heading|kebab) %}
+                {% set sourceId = 'singleton-sources-' ~ headingKey %}
+                {% if nestedUnderHeading %}
+                        </ul>
+                    </li>
                 {% endif %}
+                <li class="heading">
+                    <div class="source-item source-item--heading">
+                        <span class="type-heading-small">{{ (source.heading ?? '')|t('site') }}</span>
+                        {% if (source.heading ?? '')|length %}
+                            {% embed '_includes/disclosure-toggle' with {
+                                persist: true,
+                                storageKey: 'sources-list:' ~ headingKey,
+                                controls: sourceId,
+                                attributes: { class: 'source-item__toggle' }
+                            } %}
+                                {% block content %}
+                                    <span class="cp-icon puny">{{ iconSvg('angle-down') }}</span>
+                                    <span class="visually-hidden">{{ 'Expand {heading} sources'|t('app', { heading: source.heading }) }}</span>
+                                {% endblock %}
+                            {% endembed %}
+                        {% endif %}
+                    </div>
+                    <ul id="{{ sourceId }}" class="sources-list">
+                {% set nestedUnderHeading = true %}
 
             {% elseif (source.key ?? '') starts with 'single:' %}
                 {% set uid = source.key|split(':')|last %}
                 {% set url = sectionUrlMap[uid] ?? null %}
                 {% if url %}
-                    <li>
-                        <a{% if uid == currentSectionUid %} class="sel"{% endif %}
-                           href="{{ url }}">
-                            {{ source.label|t('site') }}
+                    <li class="source-item source-item--link">
+                        <a{% if uid == currentSectionUid %} class="sel"{% endif %} href="{{ url }}">
+                            <span class="label">{{ source.label|t('site') }}</span>
                         </a>
                     </li>
                 {% endif %}
 
             {% elseif (source.key ?? '') == 'singles' %}
-                {# Fallback: custom config still uses the old grouped 'singles' key.
-                   Expand inline so singles are still individually accessible. #}
-                <li class="heading"><span>{{ 'Singles'|t('app') }}</span></li>
+                {# Fallback: config still uses the old grouped 'singles' key. #}
+                {% if nestedUnderHeading %}
+                        </ul>
+                    </li>
+                {% endif %}
+                {% set sourceId = 'singleton-sources-singles' %}
+                <li class="heading">
+                    <div class="source-item source-item--heading">
+                        <span class="type-heading-small">{{ 'Singles'|t('app') }}</span>
+                        {% embed '_includes/disclosure-toggle' with {
+                            persist: true,
+                            storageKey: 'sources-list:singles',
+                            controls: sourceId,
+                            attributes: { class: 'source-item__toggle' }
+                        } %}
+                            {% block content %}
+                                <span class="cp-icon puny">{{ iconSvg('angle-down') }}</span>
+                                <span class="visually-hidden">{{ 'Expand {heading} sources'|t('app', { heading: 'Singles'|t('app') }) }}</span>
+                            {% endblock %}
+                        {% endembed %}
+                    </div>
+                    <ul id="{{ sourceId }}" class="sources-list">
+                {% set nestedUnderHeading = true %}
                 {% for handle, s in editableSingleSections %}
                     {% set url = sectionUrlMap[s.uid] ?? null %}
                     {% if url %}
-                        <li>
-                            <a{% if s.uid == currentSectionUid %} class="sel"{% endif %}
-                               href="{{ url }}">
-                                {{ s.name|t('site') }}
+                        <li class="source-item source-item--link">
+                            <a{% if s.uid == currentSectionUid %} class="sel"{% endif %} href="{{ url }}">
+                                <span class="label">{{ s.name|t('site') }}</span>
                             </a>
                         </li>
                     {% endif %}
@@ -60,26 +100,29 @@
                 {% set uid = source.key|split(':')|last %}
                 {% set url = sectionUrlMap[uid] ?? null %}
                 {% if url %}
-                    <li>
-                        <a href="{{ url }}">{{ source.label|t('site') }}</a>
+                    <li class="source-item source-item--link">
+                        <a href="{{ url }}"><span class="label">{{ source.label|t('site') }}</span></a>
                     </li>
                 {% endif %}
 
             {% elseif source.key is defined and source.key is not empty %}
-                {# Custom sources — navigate to the page index and pre-select the source
-                   by writing to Craft's instanceState in localStorage before leaving. #}
-                <li>
+                {# Custom sources — navigate to the page index and pre-select via localStorage. #}
+                <li class="source-item source-item--link">
                     <a href="{{ pageIndexUrl }}"
                        data-source-key="{{ source.key|e('html_attr') }}"
                        data-page-url="{{ pageIndexUrl|e('html_attr') }}"
                        class="singles-manager-custom-source">
-                        {{ source.label|t('site') }}
+                        <span class="label">{{ source.label|t('site') }}</span>
                     </a>
                 </li>
 
             {% endif %}
 
         {% endfor %}
+        {% if nestedUnderHeading %}
+                </ul>
+            </li>
+        {% endif %}
     </ul>
 </nav>
 

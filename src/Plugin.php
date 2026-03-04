@@ -366,10 +366,9 @@ class Plugin extends BasePlugin
         // Stay on the single's edit form after saving (instead of going to the entries index).
         $behavior->redirectUrl = '{cpEditUrl}';
 
-        // Fix the breadcrumb and prepend the page name to the H1 title.
-        // Section::getPage() looks for the 'singles' source key which our plugin
-        // replaced with 'single:{uid}' keys, so it always returns null and the
-        // crumb falls back to "Entries". We find the correct page ourselves.
+        // Fix the breadcrumb: Section::getPage() looks for the 'singles' source key
+        // which our plugin replaced with 'single:{uid}' keys, so it always returns null
+        // and the crumb falls back to "Entries". We find the correct page ourselves.
         $originalCrumbs = is_callable($behavior->crumbs)
             ? ($behavior->crumbs)()
             : ($behavior->crumbs ?? []);
@@ -379,21 +378,6 @@ class Plugin extends BasePlugin
             if (($src['key'] ?? null) === 'single:' . $currentSectionUid) {
                 $currentPage = $src['page'] ?? null;
                 break;
-            }
-        }
-
-        // Prepend "Page / " to the H1 title for consistency when switching sources,
-        // but only when the sidebar will actually be shown (multiple non-heading sources).
-        if ($currentPage !== null) {
-            $elementSourcesService = Craft::$app->getElementSources();
-            $pageNameId = $elementSourcesService->pageNameId($currentPage);
-            $pageSources = array_filter(
-                $elementSourcesService->getSources(Entry::class),
-                fn($s) => isset($s['page']) && $elementSourcesService->pageNameId($s['page']) === $pageNameId,
-            );
-            $nonHeadingCount = count(array_filter($pageSources, fn($s) => ($s['type'] ?? '') !== 'heading'));
-            if ($nonHeadingCount > 1) {
-                $behavior->title = Craft::t('site', $currentPage) . ' / ' . ($behavior->title ?? $element->getUiLabel());
             }
         }
 
@@ -691,7 +675,12 @@ class Plugin extends BasePlugin
             $pageSlug = StringHelper::toKebabCase($page);
             foreach ($e->navItems as &$item) {
                 if (($item['url'] ?? '') === "content/$pageSlug") {
-                    $item['url'] = $url;
+                    // Keep url as the page path so Craft's active-state check
+                    // (str_starts_with) still works. Override the rendered href
+                    // via linkAttributes so the click goes directly to the single.
+                    $item['linkAttributes'] = array_merge($item['linkAttributes'] ?? [], [
+                        'href' => UrlHelper::cpUrl($url),
+                    ]);
                     break;
                 }
             }
