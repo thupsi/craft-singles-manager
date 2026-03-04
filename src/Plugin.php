@@ -444,9 +444,10 @@ class Plugin extends BasePlugin
     }
 
     /**
-     * Rewrite CP nav item URLs for any page that contains only one source and
-     * that source is a single entry. Instead of linking to the element index,
-     * the nav item links directly to the single's edit form.
+     * Rewrite CP nav item URLs so each page links directly to its first source.
+     * If the first source is a single entry, the nav item links to its edit form.
+     * If it's a channel/structure section, it links to the section index.
+     * If it's a custom source, it links to the page index (Craft's default behaviour).
      */
     private function _fixNavLinks(RegisterCpNavItemsEvent $e): void
     {
@@ -458,19 +459,12 @@ class Plugin extends BasePlugin
             return;
         }
 
-        // Read page → single URL map from project config (avoids Section::getPage() recursion).
-        $pageByUid = [];
-        $sourceConfigs = Craft::$app->getProjectConfig()->get('elementSources.' . Entry::class) ?? [];
-        foreach ($sourceConfigs as $src) {
-            $key = $src['key'] ?? '';
-            if (str_starts_with($key, 'single:')) {
-                $pageByUid[substr($key, 7)] = $src['page'] ?? null;
-            }
+        // Build a uid → Section map for all editable sections.
+        $sectionsByUid = [];
+        foreach (Craft::$app->getEntries()->getEditableSections() as $s) {
+            $sectionsByUid[$s->uid] = $s;
         }
 
-        // For each page, check if ALL non-heading sources are singles.
-        // If so, rewrite the nav URL to go directly to the first single's edit form
-        // (analogous to how /globals links straight to the first global set).
         foreach ($pages as $page) {
             $pageNameId = $elementSourcesService->pageNameId($page);
             $pageSources = array_values(array_filter(
@@ -484,25 +478,30 @@ class Plugin extends BasePlugin
                 continue;
             }
 
-            // Skip this page if it contains any non-single source (channel, structure, custom).
-            $allAreSingles = array_reduce($nonHeadings, fn(bool $carry, array $s) =>
-                $carry && str_starts_with($s['key'] ?? '', 'single:'), true);
-            if (!$allAreSingles) {
+            $firstSource = $nonHeadings[0];
+            $firstKey = $firstSource['key'] ?? '';
+            $url = null;
+
+            if (str_starts_with($firstKey, 'single:')) {
+                $uid = substr($firstKey, 7);
+                $url = $this->_buildSingleUrl($uid);
+            } elseif (str_starts_with($firstKey, 'section:')) {
+                $uid = substr($firstKey, 8);
+                $section = $sectionsByUid[$uid] ?? null;
+                if ($section) {
+                    $url = UrlHelper::cpUrl($section->getCpIndexUri());
+                }
+            }
+            // Custom sources and anything else: leave url null → keep default page index URL.
+
+            if (!$url) {
                 continue;
             }
 
-            // Link to the first single on this page.
-            $firstUid = substr($nonHeadings[0]['key'], 7);
-            $singleUrl = $this->_buildSingleUrl($firstUid);
-            if (!$singleUrl) {
-                continue;
-            }
-
-            // Find the nav item for this page and rewrite its URL.
             $pageSlug = StringHelper::toKebabCase($page);
             foreach ($e->navItems as &$item) {
                 if (($item['url'] ?? '') === "content/$pageSlug") {
-                    $item['url'] = $singleUrl;
+                    $item['url'] = $url;
                     break;
                 }
             }
