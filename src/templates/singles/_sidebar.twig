@@ -82,3 +82,30 @@
         {% endfor %}
     </ul>
 </nav>
+
+{% if craft.app.user.getIsAdmin() and craft.app.config.general.allowAdminChanges %}
+<div id="source-actions" class="buttons">
+    <button type="button" class="btn action-btn hairline singles-manager-customize-sources-btn"
+            title="{{ 'Customize sources'|t('app') }}"
+            aria-label="{{ 'Customize sources'|t('app') }}"></button>
+</div>
+{% js %}
+(function () {
+    var btn = document.querySelector('.singles-manager-customize-sources-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        var modal = new Craft.CustomizeSourcesModal(
+            {
+                elementType: {{ 'craft\\elements\\Entry'|json_encode|raw }},
+                rootSourceKey: null,
+                sourceKey: null,
+                $visibleSources: $([]),
+                settings: { page: null },
+                asyncSelectSourceByKey: function () { return Promise.resolve(); }
+            },
+            { hideOnEsc: false, hideOnShadeClick: false, onFadeOut: function () { modal.destroy(); } }
+        );
+    });
+}());
+{% endjs %}
+{% endif %}

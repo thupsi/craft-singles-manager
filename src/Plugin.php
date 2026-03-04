@@ -77,13 +77,16 @@ class Plugin extends BasePlugin
             $this->_fixNavLinks($e);
         });
 
-        // On element index pages, hide the sources sidebar when there is only
+        // On element index pages, hide the sources list when there is only
         // one (non-heading) source — it would just show a single item with no value.
+        // Keep #source-actions visible so the Customize Sources button remains accessible.
         Craft::$app->getView()->hook('cp.layouts.elementindex', function (array &$context): void {
             $sources = $context['sources'] ?? [];
             $nonHeadings = array_filter($sources, fn($s) => ($s['type'] ?? '') !== 'heading');
             if (count($nonHeadings) <= 1) {
-                Craft::$app->getView()->registerCss('#sidebar-container { display: none !important; }');
+                Craft::$app->getView()->registerCss(
+                    '#sidebar-container nav { display: none !important; }'
+                );
             }
         });
 
