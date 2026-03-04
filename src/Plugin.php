@@ -13,6 +13,7 @@ use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterElementSourcesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\helpers\ArrayHelper;
+use craft\helpers\Cp;
 use craft\helpers\StringHelper;
 use craft\helpers\UrlHelper;
 use craft\models\Section;
@@ -234,7 +235,7 @@ class Plugin extends BasePlugin
                 return;
             }
 
-            $behavior->crumbs = function () use ($breadcrumbSourceKey) {
+            $behavior->crumbs = function () use ($breadcrumbSourceKey, $element) {
                 $elementSourcesService = Craft::$app->getElementSources();
                 $allSources = $elementSourcesService->getSources(Entry::class, withDisabled: true);
                 $currentPage = null;
@@ -276,6 +277,15 @@ class Plugin extends BasePlugin
                         ];
                     }
                 }
+
+                $crumbs[] = [
+                    'html' => Cp::elementChipHtml($element, [
+                        'showDraftName' => false,
+                        'class' => 'chromeless',
+                        'hyperlink' => true,
+                    ]),
+                    'current' => true,
+                ];
 
                 return $crumbs;
             };
