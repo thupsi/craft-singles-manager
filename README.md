@@ -8,6 +8,15 @@ The internal plugin handle remains `_singles-manager` for backwards compatibilit
 
 ---
 
+## Why though?
+
+A few reasons:
+
+- At this point (v5.9) Craft has IMO almost solved the UI challenges of the "entrification". One thing that still feels "off" to me is entryfied Global Sets. Having them displayed as entries, with authors, post dates etc feels reduntant, and the way you access them through an index and move laterally beween them can be cumbersome. The good news is that all this can be "fixed" with some light UI and flow adjustments. Combined with the (new in 5.9) ability to define custom index pages, we can now have entries with the Global Sets UI.
+- The grouping of singles in a predefined group – with a fixed label – has always felt too opinionated. We have the "Expanded Singles" plugin to deal with this, but I'd like to see something like that in core. Since we have, for some time now, the ability to define custom sources, I think it's more flexible to have singles be ungrouped by default, and *then* selectively grouped in one or multiple groups (custom sources).
+- Not exclusively related to singles: Custom sources and custom entry indexes create some bugs/confusion with breadcrumbs, especially for sources that are disabled and have their entries appear in various other sources. I tried to aleviate that with a new "fallback breadcrumb source" setting for sections. 
+
+
 ## Features
 
 ### Expanded singles in the sources sidebar
