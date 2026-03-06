@@ -14,9 +14,9 @@ This plugin is a proof of concept, built to explore potential improvements to th
 
 Specific areas explored:
 
-- **Entrified globals feel off.** As of v5.9, Craft has mostly resolved the UI friction from "entrification". The one remaining rough edge is entrified Global Sets — having them display authors, post dates, etc. feels redundant, and lateral navigation between them via an index is cumbersome. Light UI adjustments can fix this. Combined with the new (5.9) ability to define custom index pages, you can now get entries with a Global Sets-style UI.
-- **The "Singles" group is too opinionated.** The [Expanded Singles](https://github.com/verbb/expanded-singles) plugin addresses this, but ideally it would be a core feature. Since custom sources have been available for a while, it makes more sense to ungroup singles by default and selectively group them into one or more custom sources.
-- **Breadcrumb bugs with custom sources.** Custom sources and custom entry indexes can cause confusing breadcrumb behaviour, especially when a source is disabled and its entries appear in other sources. A new per-section "fallback breadcrumb source" setting addresses this.
+- **The "Singles" group is too opinionated.** The [Expanded Singles](https://github.com/verbb/expanded-singles) plugin addresses this, but ideally it would be a core feature. Since custom sources have been available for a while, it makes more sense to ungroup singles by default and selectively group them into one or more custom sources. → [discussion #17760](https://github.com/craftcms/cms/discussions/17760)
+- **Entrified globals feel off.** As of v5.9, Craft has mostly resolved the UI friction from "entrification". The one remaining rough edge is entrified Global Sets — having them display authors, post dates, etc. feels redundant, and lateral navigation between them via an index is cumbersome. A persistent sources sidebar when editing top-level ungrouped singles, combined with the new (5.9) ability to define custom index pages, offers a Global Sets-style UI. → [discussion #17760](https://github.com/craftcms/cms/discussions/17760)
+- **Breadcrumb bugs with custom sources.** Custom sources and custom entry indexes can cause confusing breadcrumb behaviour, especially when a source is disabled and its entries appear in other sources. A new per-section "fallback breadcrumb source" setting addresses this. → [discussion #18090](https://github.com/craftcms/cms/discussions/18090), [issue #18359](https://github.com/craftcms/cms/issues/18359)
 
 ---
 
@@ -28,19 +28,15 @@ Single sections are listed individually in the sources sidebar instead of being 
 
 ### Globals-style editor for singles
 
-Clicking a single in the sources sidebar opens the entry editor with a persistent left-nav sidebar, just like globals in Craft. The full native entry editor is used (drafts, revisions, preview, publish flow, right-hand metadata panel, etc.).
+Clicking a single in the sources sidebar (or a main nav item whose first source is a single) opens the entry editor with a persistent left-nav sidebar, just like globals in Craft. The full native entry editor is used (drafts, revisions, preview, publish flow, right-hand metadata panel, etc.).
 
-### Direct nav links
+### Hide metadata sidebar (per section)
 
-Main nav items whose first source is a single link directly to that single's edit form, bypassing the element index.
+A toggle on each section's settings page hides the right-hand metadata panel (slug, post date, authors, etc.) when editing entries in that section. Useful for settings-style sections where that metadata is irrelevant.
 
 ### Auto-hide sources sidebar
 
 When a page has only one source, the sources sidebar is hidden automatically. The "Customize Sources" button remains accessible.
-
-### Hide right sidebar (per section)
-
-A toggle on each section's settings page hides the right-hand metadata panel (slug, post date, authors, etc.) when editing entries in that section. Useful for settings-style sections where that metadata is irrelevant.
 
 ### Fallback breadcrumb source
 
