@@ -4,13 +4,24 @@
 
 <div id="singles-manager-settings">
     {{ forms.lightswitchField({
-        label: 'Hide right sidebar' | t('singles-manager'),
-        instructions: 'When editing this single, hide the right-hand meta sidebar (slug, dates, authors).' | t('singles-manager'),
-        id: 'singlesManagerHideRightSidebar',
-        name: 'singlesManager[hideRightSidebar]',
-        on: hideRightSidebar,
+        label: 'Read-only' | t('singles-manager'),
+        instructions: 'Make this single entirely read-only: all fields are disabled and the save button is hidden. Useful for instruction pages or CP dashboards.' | t('singles-manager'),
+        id: 'singlesManagerReadOnly',
+        name: 'singlesManager[readOnly]',
+        on: readOnly,
         toggle: null
     }) }}
+
+    <div id="singles-manager-hide-sidebar-field">
+        {{ forms.lightswitchField({
+            label: 'Hide right sidebar' | t('singles-manager'),
+            instructions: 'When editing this single, hide the right-hand meta sidebar (slug, dates, authors).' | t('singles-manager'),
+            id: 'singlesManagerHideRightSidebar',
+            name: 'singlesManager[hideRightSidebar]',
+            on: hideRightSidebar,
+            toggle: null
+        }) }}
+    </div>
 
     {{ forms.selectField({
         label: 'Fallback breadcrumb source' | t('singles-manager'),
@@ -21,3 +32,24 @@
         value: currentBreadcrumbSourceKey ?? '',
     }) }}
 </div>
+
+<script>
+(function () {
+    var readOnlyBtn = document.getElementById('singlesManagerReadOnly');
+    var hideSidebarField = document.getElementById('singles-manager-hide-sidebar-field');
+    if (!readOnlyBtn || !hideSidebarField) return;
+
+    var update = function () {
+        hideSidebarField.style.display = readOnlyBtn.classList.contains('on') ? 'none' : '';
+    };
+
+    // Apply immediately based on server-rendered state.
+    update();
+
+    // Watch for Craft toggling the 'on' class on the lightswitch button.
+    new MutationObserver(update).observe(readOnlyBtn, {
+        attributes: true,
+        attributeFilter: ['class'],
+    });
+}());
+</script>

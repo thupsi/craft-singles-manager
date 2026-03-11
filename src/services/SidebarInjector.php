@@ -58,17 +58,19 @@ class SidebarInjector extends Component
         /** @var Settings $settings */
         $settings = Plugin::getInstance()->getSettings();
         $breadcrumbSourceKey = $settings->breadcrumbSourceKeys[$section->uid] ?? null;
+        $isReadOnly = in_array($section->uid, $settings->readOnlySections, true);
 
         if ($sourceDisabled) {
-            $this->handleDisabledSource($section, $element, $settings, $breadcrumbSourceKey);
+            $this->handleDisabledSource($section, $element, $settings, $breadcrumbSourceKey, $isReadOnly);
             return;
         }
 
         // Apply "hide right sidebar" for all section types (enabled sources).
+        // Read-only mode also always hides it (no point showing editable meta).
         $response = Craft::$app->getResponse();
         /** @var CpScreenResponseBehavior|null $behavior */
         $behavior = $response->getBehavior(CpScreenResponseBehavior::NAME);
-        if ($behavior && in_array($section->uid, $settings->hideSidebarSections, true)) {
+        if ($behavior && ($isReadOnly || in_array($section->uid, $settings->hideSidebarSections, true))) {
             $originalPrepareScreen = $behavior->prepareScreen;
             $behavior->prepareScreen = function ($response, $containerId) use ($originalPrepareScreen) {
                 if ($originalPrepareScreen) {
@@ -85,6 +87,15 @@ class SidebarInjector extends Component
 
         if (!$behavior) {
             return;
+        }
+
+        // For read-only mode, register CSS to hide the action/save button area.
+        // CSS is injected server-side so it is reliable regardless of Vue's
+        // async rendering — no JS timing issues.
+        if ($isReadOnly) {
+            Craft::$app->getView()->registerCss(
+                '#action-buttons > *:not(#action-btn) { display: none !important; }'
+            );
         }
 
         $currentSectionUid = $section->uid;
@@ -137,6 +148,7 @@ class SidebarInjector extends Component
         Entry $element,
         Settings $settings,
         ?string $breadcrumbSourceKey,
+        bool $isReadOnly = false,
     ): void {
         if (!$breadcrumbSourceKey) {
             return;
@@ -149,9 +161,16 @@ class SidebarInjector extends Component
             return;
         }
 
-        // Hide the right-hand meta sidebar if configured for this section.
+        // For read-only mode, register CSS to hide the action/save button area.
+        if ($isReadOnly) {
+            Craft::$app->getView()->registerCss(
+                '#action-buttons > *:not(#action-btn) { display: none !important; }'
+            );
+        }
+
+        // Hide the right-hand meta sidebar if configured or in read-only mode.
         $hidden = $settings->hideSidebarSections;
-        if (in_array($section->uid, $hidden, true)) {
+        if ($isReadOnly || in_array($section->uid, $hidden, true)) {
             $originalPrepareScreen = $behavior->prepareScreen;
             $behavior->prepareScreen = function ($response, $containerId) use ($originalPrepareScreen) {
                 if ($originalPrepareScreen) {

@@ -30,6 +30,10 @@ Single sections are listed individually in the sources sidebar instead of being 
 
 Clicking a single in the sources sidebar (or a main nav item whose first source is a single) opens the entry editor with a persistent left-nav sidebar, just like globals in Craft. The full native entry editor is used (drafts, revisions, preview, publish flow, right-hand metadata panel, etc.).
 
+### Read-only entry
+
+A toggle on each section's settings page makes the entry editor entirely read-only: the save / action buttons are hidden and the right-hand metadata sidebar is removed. Useful for documentation pages, dashboards, or any single whose content should only be edited directly in the project config or templates.
+
 ### Hide metadata sidebar (per section)
 
 A toggle on each section's settings page hides the right-hand metadata panel (slug, post date, authors, etc.) when editing entries in that section. Useful for settings-style sections where that metadata is irrelevant.
@@ -109,6 +113,10 @@ Review your source ordering — the old grouped `singles` key is replaced by ind
 ## Configuration
 
 All settings are stored in project config under `plugins._singles-manager.settings` and propagate to all environments via `php craft project-config/apply`.
+
+### Read-only
+
+On any single section's settings page, enable **"Read-only"** to hide the action/save buttons and the right-hand metadata panel when editing that entry. The "Hide right sidebar" toggle is hidden automatically when this is enabled, as it is implied.
 
 ### Hide right sidebar
 

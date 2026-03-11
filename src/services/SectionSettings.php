@@ -43,6 +43,7 @@ class SectionSettings extends Component
         $settings = Plugin::getInstance()->getSettings();
         $hidden = $settings->hideSidebarSections;
         $hideRightSidebar = in_array($section->uid, $hidden, true);
+        $readOnly = in_array($section->uid, $settings->readOnlySections, true);
 
         $breadcrumbSourceKeys = $settings->breadcrumbSourceKeys;
         $currentBreadcrumbSourceKey = $breadcrumbSourceKeys[$section->uid] ?? null;
@@ -71,6 +72,7 @@ class SectionSettings extends Component
         $originalContent = $behavior->contentHtml;
         $behavior->contentHtml = function () use (
             $originalContent,
+            $readOnly,
             $hideRightSidebar,
             $breadcrumbSourceOptions,
             $currentBreadcrumbSourceKey,
@@ -79,6 +81,7 @@ class SectionSettings extends Component
             $html .= Craft::$app->getView()->renderTemplate(
                 '_singles-manager/settings/_section-field',
                 [
+                    'readOnly' => $readOnly,
                     'hideRightSidebar' => $hideRightSidebar,
                     'breadcrumbSourceOptions' => $breadcrumbSourceOptions,
                     'currentBreadcrumbSourceKey' => $currentBreadcrumbSourceKey,
@@ -112,14 +115,22 @@ class SectionSettings extends Component
         $settings = Plugin::getInstance()->getSettings();
 
         $hidden = $settings->hideSidebarSections;
+        $readOnlySections = $settings->readOnlySections;
         $breadcrumbSourceKeys = $settings->breadcrumbSourceKeys;
 
         $shouldHide = !empty($smParams['hideRightSidebar']);
+        $shouldBeReadOnly = !empty($smParams['readOnly']);
 
         if ($shouldHide && !in_array($section->uid, $hidden, true)) {
             $hidden[] = $section->uid;
         } elseif (!$shouldHide) {
             $hidden = array_values(array_filter($hidden, fn($uid) => $uid !== $section->uid));
+        }
+
+        if ($shouldBeReadOnly && !in_array($section->uid, $readOnlySections, true)) {
+            $readOnlySections[] = $section->uid;
+        } elseif (!$shouldBeReadOnly) {
+            $readOnlySections = array_values(array_filter($readOnlySections, fn($uid) => $uid !== $section->uid));
         }
 
         $breadcrumbKey = $smParams['breadcrumbSourceKey'] ?? '';
@@ -130,6 +141,7 @@ class SectionSettings extends Component
         }
 
         $settings->hideSidebarSections = $hidden;
+        $settings->readOnlySections = $readOnlySections;
         $settings->breadcrumbSourceKeys = $breadcrumbSourceKeys;
         Craft::$app->getPlugins()->savePluginSettings(Plugin::getInstance(), $settings->toArray());
     }
